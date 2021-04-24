@@ -19,7 +19,7 @@ public class JwtFilterTest {
 
     @Test
     public void 当Cookie是空什么也不做() throws Exception {
-        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, new PassportFactoryImpl());
+        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, new PassportFactoryImpl(), new JwtPassportProvider());
         MockRequest request = new MockRequest();
         jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
         assertThat(request.getAttribute(PASSPORT_NAME), nullValue());
@@ -30,10 +30,11 @@ public class JwtFilterTest {
         Passport passport = new TestPassport(1, Arrays.asList("admin"));
         JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
         String cookieValue = jwtPassportProvider.toCookieValue(passport);
-        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, new PassportFactoryImpl());
+        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, new PassportFactoryImpl(), new JwtPassportProvider());
         MockRequest request = new MockRequest();
         request.setCookies(new Cookie[]{new Cookie(AUTHORIZATION_NAME, cookieValue)});
         jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
         assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
+        assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
     }
 }

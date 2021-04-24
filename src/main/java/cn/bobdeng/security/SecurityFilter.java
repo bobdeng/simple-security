@@ -11,12 +11,16 @@ public class SecurityFilter implements Filter {
     private String cookieName;
     private String passportName;
     private PassportFactory passportFactory;
+    private JwtPassportProvider passportProvider;
 
     public SecurityFilter(@Value("${security.jwt.cookie.name}") String cookieName,
-                          @Value("${security.jwt.request.name}") String passportName, PassportFactory passportFactory) {
+                          @Value("${security.jwt.request.name}") String passportName,
+                          PassportFactory passportFactory,
+                          JwtPassportProvider passportProvider) {
         this.cookieName = cookieName;
         this.passportName = passportName;
         this.passportFactory = passportFactory;
+        this.passportProvider = passportProvider;
     }
 
     @Override
@@ -27,10 +31,8 @@ public class SecurityFilter implements Filter {
                     .filter(cookie -> cookie.getName().equals(cookieName))
                     .findFirst()
                     .ifPresent(cookie -> {
-                        JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
-                        Passport passport = passportFactory.newPassport();
-                        passport.fromCookie(jwtPassportProvider.fromCookie(cookie.getValue()));
-                        request.setAttribute(passportName, passport);
+                        String value = passportProvider.fromCookie(cookie.getValue());
+                        request.setAttribute(passportName, passportFactory.fromString(value));
                     });
         }
     }

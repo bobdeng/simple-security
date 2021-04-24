@@ -32,7 +32,6 @@ public class JwtPassportProvider implements PassportProvider {
 
     @Override
     public String toCookieValue(Passport passport) {
-        System.out.println(passport.toStringValue());
         return prefix + Jwts.builder()
                 .setSubject(passport.toStringValue())
                 .setExpiration(new Date(System.currentTimeMillis() + expireAfter))

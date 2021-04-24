@@ -11,15 +11,15 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RolePermissionAspectTest {
+public class PermissionAspectTest {
     @Mock
-    RolePermissionRepository rolePermissionRepository;
+    PermissionRepository rolePermissionRepository;
 
     @Test
     public void 当有角色() throws Exception {
-        when(rolePermissionRepository.hasAnyRole(new String[]{"admin"})).thenReturn(true);
-        RolePermissionAspect rolePermissionAspect = new RolePermissionAspect(rolePermissionRepository);
-        RolePermission permission = new RolePermission() {
+        when(rolePermissionRepository.hasPermission(new String[]{"admin"})).thenReturn(true);
+        PermissionAspect rolePermissionAspect = new PermissionAspect(rolePermissionRepository);
+        Permission permission = new Permission() {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -40,9 +40,9 @@ public class RolePermissionAspectTest {
 
     @Test(expected = PermissionDeniedException.class)
     public void 当没有有角色() throws Exception {
-        when(rolePermissionRepository.hasAnyRole(new String[]{"admin"})).thenReturn(false);
-        RolePermissionAspect rolePermissionAspect = new RolePermissionAspect(rolePermissionRepository);
-        RolePermission permission = new RolePermission() {
+        when(rolePermissionRepository.hasPermission(new String[]{"admin"})).thenReturn(false);
+        PermissionAspect rolePermissionAspect = new PermissionAspect(rolePermissionRepository);
+        Permission permission = new Permission() {
 
             @Override
             public Class<? extends Annotation> annotationType() {

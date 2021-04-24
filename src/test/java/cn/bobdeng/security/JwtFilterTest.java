@@ -38,4 +38,18 @@ public class JwtFilterTest {
         assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
         assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
     }
+
+    @Test
+    public void 当Header有值() throws Exception {
+        Passport passport = new TestPassport(1, Arrays.asList("admin"));
+        JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
+        PassportFactoryImpl passportFactory = new PassportFactoryImpl();
+        String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
+        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, new JwtPassportProvider());
+        MockRequest request = new MockRequest();
+        request.setHeader(AUTHORIZATION_NAME, cookieValue);
+        jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
+        assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
+        assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
+    }
 }

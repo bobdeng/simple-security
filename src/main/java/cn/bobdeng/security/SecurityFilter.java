@@ -3,8 +3,10 @@ package cn.bobdeng.security;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.servlet.*;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class SecurityFilter implements Filter {
@@ -13,8 +15,8 @@ public class SecurityFilter implements Filter {
     private PassportFactory passportFactory;
     private JwtPassportProvider passportProvider;
 
-    public SecurityFilter(@Value("${security.jwt.cookie.name}") String cookieName,
-                          @Value("${security.jwt.request.name}") String passportName,
+    public SecurityFilter(String cookieName,
+                          String passportName,
                           PassportFactory passportFactory,
                           JwtPassportProvider passportProvider) {
         this.cookieName = cookieName;
@@ -26,15 +28,30 @@ public class SecurityFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        if (request.getCookies() != null) {
-            Stream.of(request.getCookies())
-                    .filter(cookie -> cookie.getName().equals(cookieName))
-                    .findFirst()
-                    .ifPresent(cookie -> {
-                        String value = passportProvider.from(cookie.getValue());
-                        request.setAttribute(passportName, passportFactory.fromString(value));
-                    });
-        }
+        getPassportString(request)
+                .ifPresent(passportString -> {
+                    String value = passportProvider.from(passportString);
+                    request.setAttribute(passportName, passportFactory.fromString(value));
+                });
+
         chain.doFilter(servletRequest, response);
+    }
+
+    private Optional<String> getPassportString(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            Optional<String> passportFromCookie = getPassportFromCookie(request);
+            if (passportFromCookie.isPresent()) {
+                return passportFromCookie;
+            }
+        }
+        return Optional.ofNullable(request.getHeader(cookieName));
+
+    }
+
+    private Optional<String> getPassportFromCookie(HttpServletRequest request) {
+        return Stream.of(request.getCookies())
+                .filter(cookie -> cookie.getName().equals(cookieName))
+                .findFirst()
+                .map(Cookie::getValue);
     }
 }

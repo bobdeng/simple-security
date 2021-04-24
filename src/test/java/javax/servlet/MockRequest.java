@@ -31,7 +31,7 @@ public class MockRequest implements HttpServletRequest {
 
     @Override
     public String getHeader(String name) {
-        return null;
+        return headers.get(name);
     }
 
     @Override
@@ -359,5 +359,11 @@ public class MockRequest implements HttpServletRequest {
     @Override
     public DispatcherType getDispatcherType() {
         return null;
+    }
+
+    private Map<String, String> headers = new HashMap<>();
+
+    public void setHeader(String name, String value) {
+        headers.put(name, value);
     }
 }

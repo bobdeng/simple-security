@@ -43,7 +43,7 @@ public class JwtFilterTest {
     public void 当Header有值() throws Exception {
         Passport passport = new TestPassport(1, Arrays.asList("admin"));
         JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
-        PassportFactoryImpl passportFactory = new PassportFactoryImpl();
+        PassportFactory passportFactory = new GsonPassportFactory(TestPassport.class);
         String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
         SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, new JwtPassportProvider());
         MockRequest request = new MockRequest();

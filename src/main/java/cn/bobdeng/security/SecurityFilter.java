@@ -35,5 +35,6 @@ public class SecurityFilter implements Filter {
                         request.setAttribute(passportName, passportFactory.fromString(value));
                     });
         }
+        chain.doFilter(servletRequest, response);
     }
 }

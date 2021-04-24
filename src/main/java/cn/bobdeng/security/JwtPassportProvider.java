@@ -9,12 +9,16 @@ import java.util.Date;
 
 public class JwtPassportProvider implements PassportProvider {
     private String prefix = "Bearer ";
-    private long expireAfter = 86400 * 1000;
+    private long expireAfter = 86400 * 1000 * 10;
     private String secretKey = "this is a secret";
 
     public JwtPassportProvider(String prefix, long expireAfter, String secretKey) {
         this.prefix = prefix;
         this.expireAfter = expireAfter;
+        this.secretKey = secretKey;
+    }
+
+    public JwtPassportProvider(String secretKey) {
         this.secretKey = secretKey;
     }
 

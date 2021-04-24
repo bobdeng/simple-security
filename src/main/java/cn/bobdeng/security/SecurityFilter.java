@@ -1,5 +1,7 @@
 package cn.bobdeng.security;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.servlet.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+@Slf4j
 public class SecurityFilter implements Filter {
     private String passportKey;
     private String passportAttributeName;
@@ -28,8 +31,12 @@ public class SecurityFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         getPassportString(request)
                 .ifPresent(passportString -> {
-                    String value = passportProvider.from(passportString);
-                    request.setAttribute(passportAttributeName, passportFactory.fromString(value));
+                    try {
+                        String value = passportProvider.from(passportString);
+                        request.setAttribute(passportAttributeName, passportFactory.fromString(value));
+                    } catch (Exception e) {
+                        log.warn(e.getMessage());
+                    }
                 });
 
         chain.doFilter(servletRequest, response);

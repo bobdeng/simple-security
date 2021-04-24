@@ -8,15 +8,24 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 
 public class JwtPassportProvider implements PassportProvider {
-    private static final String PREFIX = "Bearer ";
-    private static final long EXPIRE = 86400 * 1000;
-    public static final String BASE_64_ENCODED_SECRET_KEY = "P%LtIprLOSXT$ZZuMwzjTvBgDuBR3@K9";
+    private String prefix = "Bearer ";
+    private long expireAfter = 86400 * 1000;
+    private String secretKey = "this is a secret";
+
+    public JwtPassportProvider(String prefix, long expireAfter, String secretKey) {
+        this.prefix = prefix;
+        this.expireAfter = expireAfter;
+        this.secretKey = secretKey;
+    }
+
+    public JwtPassportProvider() {
+    }
 
     @Override
     public String fromCookie(String value) {
         Jws<Claims> jws = Jwts.parser()
-                .setSigningKey(BASE_64_ENCODED_SECRET_KEY)
-                .parseClaimsJws(value.substring(PREFIX.length()));
+                .setSigningKey(secretKey)
+                .parseClaimsJws(value.substring(prefix.length()));
         return jws.getBody().getSubject();
 
     }
@@ -24,10 +33,10 @@ public class JwtPassportProvider implements PassportProvider {
     @Override
     public String toCookieValue(Passport passport) {
         System.out.println(passport.toStringValue());
-        return PREFIX + Jwts.builder()
+        return prefix + Jwts.builder()
                 .setSubject(passport.toStringValue())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRE))
-                .signWith(SignatureAlgorithm.HS256, BASE_64_ENCODED_SECRET_KEY)
+                .setExpiration(new Date(System.currentTimeMillis() + expireAfter))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
 }

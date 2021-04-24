@@ -29,8 +29,9 @@ public class JwtFilterTest {
     public void 当Cookie有值() throws Exception {
         Passport passport = new TestPassport(1, Arrays.asList("admin"));
         JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
-        String cookieValue = jwtPassportProvider.toCookieValue(passport);
-        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, new PassportFactoryImpl(), new JwtPassportProvider());
+        PassportFactoryImpl passportFactory = new PassportFactoryImpl();
+        String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
+        SecurityFilter jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, new JwtPassportProvider());
         MockRequest request = new MockRequest();
         request.setCookies(new Cookie[]{new Cookie(AUTHORIZATION_NAME, cookieValue)});
         jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());

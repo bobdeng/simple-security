@@ -1,6 +1,5 @@
 package cn.bobdeng.security;
 
-import com.google.gson.Gson;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
@@ -17,15 +16,4 @@ public class TestPassport implements Passport {
         this.roles = roles;
     }
 
-    @Override
-    public void fromString(String value) {
-        TestPassport testPassport = new Gson().fromJson(value, TestPassport.class);
-        this.userId = testPassport.userId;
-        this.roles = testPassport.roles;
-    }
-
-    @Override
-    public String toStringValue() {
-        return new Gson().toJson(this);
-    }
 }

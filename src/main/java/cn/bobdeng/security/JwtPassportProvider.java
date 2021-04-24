@@ -22,7 +22,7 @@ public class JwtPassportProvider implements PassportProvider {
     }
 
     @Override
-    public String fromCookie(String value) {
+    public String from(String value) {
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(value.substring(prefix.length()));
@@ -31,9 +31,9 @@ public class JwtPassportProvider implements PassportProvider {
     }
 
     @Override
-    public String toCookieValue(Passport passport) {
+    public String to(String subject) {
         return prefix + Jwts.builder()
-                .setSubject(passport.toStringValue())
+                .setSubject(subject)
                 .setExpiration(new Date(System.currentTimeMillis() + expireAfter))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();

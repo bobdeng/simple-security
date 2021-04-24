@@ -8,4 +8,9 @@ public class PassportFactoryImpl implements PassportFactory {
     public Passport fromString(String value) {
         return new Gson().fromJson(value, TestPassport.class);
     }
+
+    @Override
+    public String toString(Passport passport) {
+        return new Gson().toJson(passport);
+    }
 }

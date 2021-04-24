@@ -1,7 +1,7 @@
 package cn.bobdeng.security;
 
 public interface PassportProvider {
-    String fromCookie(String value);
+    String from(String value);
 
-    String toCookieValue(Passport passport);
+    String to(String subject);
 }

@@ -31,7 +31,7 @@ public class SecurityFilter implements Filter {
                     .filter(cookie -> cookie.getName().equals(cookieName))
                     .findFirst()
                     .ifPresent(cookie -> {
-                        String value = passportProvider.fromCookie(cookie.getValue());
+                        String value = passportProvider.from(cookie.getValue());
                         request.setAttribute(passportName, passportFactory.fromString(value));
                     });
         }

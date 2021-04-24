@@ -15,5 +15,4 @@ public class TestPassport implements Passport {
         this.userId = userId;
         this.roles = roles;
     }
-
 }

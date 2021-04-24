@@ -1,7 +1,5 @@
 package cn.bobdeng.security;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import javax.servlet.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -10,17 +8,17 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class SecurityFilter implements Filter {
-    private String cookieName;
-    private String passportName;
+    private String passportKey;
+    private String passportAttributeName;
     private PassportFactory passportFactory;
     private JwtPassportProvider passportProvider;
 
-    public SecurityFilter(String cookieName,
-                          String passportName,
+    public SecurityFilter(String passportKey,
+                          String passportAttributeName,
                           PassportFactory passportFactory,
                           JwtPassportProvider passportProvider) {
-        this.cookieName = cookieName;
-        this.passportName = passportName;
+        this.passportKey = passportKey;
+        this.passportAttributeName = passportAttributeName;
         this.passportFactory = passportFactory;
         this.passportProvider = passportProvider;
     }
@@ -31,7 +29,7 @@ public class SecurityFilter implements Filter {
         getPassportString(request)
                 .ifPresent(passportString -> {
                     String value = passportProvider.from(passportString);
-                    request.setAttribute(passportName, passportFactory.fromString(value));
+                    request.setAttribute(passportAttributeName, passportFactory.fromString(value));
                 });
 
         chain.doFilter(servletRequest, response);
@@ -44,13 +42,13 @@ public class SecurityFilter implements Filter {
                 return passportFromCookie;
             }
         }
-        return Optional.ofNullable(request.getHeader(cookieName));
+        return Optional.ofNullable(request.getHeader(passportKey));
 
     }
 
     private Optional<String> getPassportFromCookie(HttpServletRequest request) {
         return Stream.of(request.getCookies())
-                .filter(cookie -> cookie.getName().equals(cookieName))
+                .filter(cookie -> cookie.getName().equals(passportKey))
                 .findFirst()
                 .map(Cookie::getValue);
     }

@@ -4,9 +4,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.Getter;
 
 import java.util.Date;
-
+@Getter
 public class JwtPassportProvider implements PassportProvider {
     private String prefix = "Bearer ";
     private long expireAfter = 86400 * 1000 * 10;

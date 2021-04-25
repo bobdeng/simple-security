@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.servlet.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -32,7 +33,7 @@ public class SecurityFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        transferPassport(request);
+        transferPassport(request, (HttpServletResponse) response);
         try {
             chain.doFilter(servletRequest, response);
         } finally {
@@ -40,20 +41,27 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private void transferPassport(HttpServletRequest request) {
+    private void transferPassport(HttpServletRequest request, HttpServletResponse response) {
         getPassportString(request)
-                .ifPresent(passportString -> parsePassport(request, passportString));
+                .ifPresent(passportString -> parsePassport(request, passportString, response));
     }
 
-    private void parsePassport(HttpServletRequest request, String passportString) {
+    private void parsePassport(HttpServletRequest request, String passportString, HttpServletResponse response) {
         try {
             String value = passportProvider.from(passportString);
             Passport passport = passportFactory.fromString(value);
             passportThreadLocal.set(passport);
+            writeNewPassportToResponse(response, passport);
             request.setAttribute(passportAttributeName, passport);
         } catch (Exception e) {
             log.warn(e.getMessage());
         }
+    }
+
+    private void writeNewPassportToResponse(HttpServletResponse response, Passport passport) {
+        Cookie cookie = new Cookie(passportKey, passportProvider.to(passportFactory.toString(passport)));
+        cookie.setMaxAge((int) passportProvider.getExpireAfter() / 1000);
+        response.addCookie(cookie);
     }
 
     private Optional<String> getPassportString(HttpServletRequest request) {

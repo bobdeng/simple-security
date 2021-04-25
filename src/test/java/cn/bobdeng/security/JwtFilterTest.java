@@ -21,6 +21,7 @@ public class JwtFilterTest {
     private MockRequest request;
     private PassportFactoryImpl passportFactory;
     private PassportThreadLocalImpl passportThreadLocal;
+    private MockServletResponse response;
 
     @Before
     public void setup() {
@@ -28,6 +29,7 @@ public class JwtFilterTest {
         passportThreadLocal = new PassportThreadLocalImpl();
         jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, new JwtPassportProvider(), passportThreadLocal);
         request = new MockRequest();
+        response = new MockServletResponse();
     }
 
     @Test
@@ -42,10 +44,11 @@ public class JwtFilterTest {
         JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
         String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
         request.setCookies(new Cookie[]{new Cookie(AUTHORIZATION_NAME, cookieValue)});
-        jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
+        jwtFilter.doFilter(request, response, new MockFilterChain());
         assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
         assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
         assertThat(passportThreadLocal.getLogs(), is(Arrays.asList("set", "clear")));
+        assertThat(response.getCookies().size(), is(1));
     }
 
     @Test

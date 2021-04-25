@@ -15,31 +15,45 @@ public class SecurityFilter implements Filter {
     private String passportAttributeName;
     private PassportFactory passportFactory;
     private JwtPassportProvider passportProvider;
+    private PassportThreadLocal passportThreadLocal;
 
     public SecurityFilter(String passportKey,
                           String passportAttributeName,
                           PassportFactory passportFactory,
-                          JwtPassportProvider passportProvider) {
+                          JwtPassportProvider passportProvider,
+                          PassportThreadLocal passportThreadLocal) {
         this.passportKey = passportKey;
         this.passportAttributeName = passportAttributeName;
         this.passportFactory = passportFactory;
         this.passportProvider = passportProvider;
+        this.passportThreadLocal = passportThreadLocal;
     }
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        getPassportString(request)
-                .ifPresent(passportString -> {
-                    try {
-                        String value = passportProvider.from(passportString);
-                        request.setAttribute(passportAttributeName, passportFactory.fromString(value));
-                    } catch (Exception e) {
-                        log.warn(e.getMessage());
-                    }
-                });
+        transferPassport(request);
+        try {
+            chain.doFilter(servletRequest, response);
+        } finally {
+            passportThreadLocal.clear();
+        }
+    }
 
-        chain.doFilter(servletRequest, response);
+    private void transferPassport(HttpServletRequest request) {
+        getPassportString(request)
+                .ifPresent(passportString -> parsePassport(request, passportString));
+    }
+
+    private void parsePassport(HttpServletRequest request, String passportString) {
+        try {
+            String value = passportProvider.from(passportString);
+            Passport passport = passportFactory.fromString(value);
+            passportThreadLocal.set(passport);
+            request.setAttribute(passportAttributeName, passport);
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
     }
 
     private Optional<String> getPassportString(HttpServletRequest request) {

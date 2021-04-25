@@ -7,23 +7,17 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Getter;
 
 import java.util.Date;
-@Getter
+
 public class JwtPassportProvider implements PassportProvider {
-    private String prefix = "Bearer ";
-    private long expireAfter = 86400 * 1000 * 10;
-    private String secretKey = "this is a secret";
+    private String prefix;
+    @Getter
+    private long expireAfter;
+    private String secretKey;
 
     public JwtPassportProvider(String prefix, long expireAfter, String secretKey) {
         this.prefix = prefix;
         this.expireAfter = expireAfter;
         this.secretKey = secretKey;
-    }
-
-    public JwtPassportProvider(String secretKey) {
-        this.secretKey = secretKey;
-    }
-
-    public JwtPassportProvider() {
     }
 
     @Override

@@ -7,8 +7,8 @@ import javax.servlet.MockFilterChain;
 import javax.servlet.MockRequest;
 import javax.servlet.MockServletResponse;
 import javax.servlet.http.Cookie;
-
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,15 +19,17 @@ public class JwtFilterTest {
     public static final String AUTHORIZATION_NAME = "Authorization";
     private SecurityFilter jwtFilter;
     private MockRequest request;
-    private PassportFactoryImpl passportFactory;
+    private GsonPassportFactory passportFactory;
     private PassportThreadLocalImpl passportThreadLocal;
     private MockServletResponse response;
+    private JwtPassportProvider passportProvider;
 
     @Before
     public void setup() {
-        passportFactory = new PassportFactoryImpl();
+        passportFactory = new GsonPassportFactory(TestPassport.class);
         passportThreadLocal = new PassportThreadLocalImpl();
-        jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, new JwtPassportProvider(), passportThreadLocal);
+        passportProvider = new JwtPassportProvider("Bearer ", 60000, "123456");
+        jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, passportProvider, passportThreadLocal);
         request = new MockRequest();
         response = new MockServletResponse();
     }
@@ -41,8 +43,7 @@ public class JwtFilterTest {
     @Test
     public void 当Cookie有值() throws Exception {
         Passport passport = new TestPassport(1, Arrays.asList("admin"));
-        JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
-        String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
+        String cookieValue = passportProvider.to(passportFactory.toString(passport));
         request.setCookies(new Cookie[]{new Cookie(AUTHORIZATION_NAME, cookieValue)});
         jwtFilter.doFilter(request, response, new MockFilterChain());
         assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
@@ -54,12 +55,19 @@ public class JwtFilterTest {
     @Test
     public void 当Header有值() throws Exception {
         Passport passport = new TestPassport(1, Arrays.asList("admin"));
-        JwtPassportProvider jwtPassportProvider = new JwtPassportProvider();
-        String cookieValue = jwtPassportProvider.to(passportFactory.toString(passport));
+        String cookieValue = passportProvider.to(passportFactory.toString(passport));
         request.setHeader(AUTHORIZATION_NAME, cookieValue);
         jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
         assertThat(request.getAttribute(PASSPORT_NAME), notNullValue());
         assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
         assertThat(passportThreadLocal.getLogs(), is(Arrays.asList("set", "clear")));
+    }
+
+    @Test
+    public void 当Header有值但不合法() throws Exception {
+        request.setHeader(AUTHORIZATION_NAME, "illegal value");
+        jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
+        assertThat(request.getAttribute(PASSPORT_NAME), nullValue());
+        assertThat(passportThreadLocal.getLogs(), is(Arrays.asList("clear")));
     }
 }

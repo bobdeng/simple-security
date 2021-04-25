@@ -11,23 +11,40 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 @Slf4j
-public class SecurityFilter implements Filter {
-    private String passportKey;
-    private String passportAttributeName;
-    private PassportFactory passportFactory;
-    private JwtPassportProvider passportProvider;
-    private PassportThreadLocal passportThreadLocal;
+public class SecurityFilter<T extends Passport> implements Filter {
+    private final String passportKey;
+    private final String passportAttributeName;
+    private final PassportFactory<T> passportFactory;
+    private final JwtPassportProvider passportProvider;
+    private final PassportThreadLocal<T> passportThreadLocal;
+    private final LoginStatusRepository<T> loginStatusRepository;
 
     public SecurityFilter(String passportKey,
                           String passportAttributeName,
-                          PassportFactory passportFactory,
+                          PassportFactory<T> passportFactory,
                           JwtPassportProvider passportProvider,
-                          PassportThreadLocal passportThreadLocal) {
+                          PassportThreadLocal<T> passportThreadLocal) {
         this.passportKey = passportKey;
         this.passportAttributeName = passportAttributeName;
         this.passportFactory = passportFactory;
         this.passportProvider = passportProvider;
         this.passportThreadLocal = passportThreadLocal;
+        this.loginStatusRepository = new DefaultLoginStatusRepository();
+    }
+
+    public SecurityFilter(String passportKey,
+                          String passportAttributeName,
+                          PassportFactory<T> passportFactory,
+                          JwtPassportProvider passportProvider,
+                          PassportThreadLocal<T> passportThreadLocal,
+                          LoginStatusRepository<T> loginStatusRepository) {
+        this.passportKey = passportKey;
+        this.passportAttributeName = passportAttributeName;
+        this.passportFactory = passportFactory;
+        this.passportProvider = passportProvider;
+        this.passportThreadLocal = passportThreadLocal;
+
+        this.loginStatusRepository = loginStatusRepository;
     }
 
     @Override
@@ -49,7 +66,10 @@ public class SecurityFilter implements Filter {
     private void parsePassport(HttpServletRequest request, String passportString, HttpServletResponse response) {
         try {
             String value = passportProvider.from(passportString);
-            Passport passport = passportFactory.fromString(value);
+            T passport = passportFactory.fromString(value);
+            if (loginStatusRepository.isLogout(passport)) {
+                return;
+            }
             passportThreadLocal.set(passport);
             writeNewPassportToResponse(response, passport);
             request.setAttribute(passportAttributeName, passport);
@@ -58,7 +78,7 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private void writeNewPassportToResponse(HttpServletResponse response, Passport passport) {
+    private void writeNewPassportToResponse(HttpServletResponse response, T passport) {
         Cookie cookie = new Cookie(passportKey, passportProvider.to(passportFactory.toString(passport)));
         cookie.setMaxAge((int) passportProvider.getExpireAfter() / 1000);
         response.addCookie(cookie);

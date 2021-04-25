@@ -1,8 +1,8 @@
 package cn.bobdeng.security;
 
-public interface PassportFactory {
+public interface PassportFactory<T extends Passport> {
 
-    Passport fromString(String value);
+    T fromString(String value);
 
-    String toString(Passport passport);
+    String toString(T passport);
 }

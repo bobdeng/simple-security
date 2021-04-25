@@ -8,7 +8,6 @@ import javax.servlet.MockRequest;
 import javax.servlet.MockServletResponse;
 import javax.servlet.http.Cookie;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,13 +22,16 @@ public class JwtFilterTest {
     private PassportThreadLocalImpl passportThreadLocal;
     private MockServletResponse response;
     private JwtPassportProvider passportProvider;
+    private LoginStatusRepositoryImpl<Passport> passportLoginStatusRepository;
 
     @Before
     public void setup() {
         passportFactory = new GsonPassportFactory(TestPassport.class);
         passportThreadLocal = new PassportThreadLocalImpl();
+        passportLoginStatusRepository = new LoginStatusRepositoryImpl<>();
+        passportLoginStatusRepository.setLogout(false);
         passportProvider = new JwtPassportProvider("Bearer ", 60000, "123456");
-        jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, passportProvider, passportThreadLocal);
+        jwtFilter = new SecurityFilter(AUTHORIZATION_NAME, PASSPORT_NAME, passportFactory, passportProvider, passportThreadLocal, passportLoginStatusRepository);
         request = new MockRequest();
         response = new MockServletResponse();
     }
@@ -62,6 +64,17 @@ public class JwtFilterTest {
         assertThat(request.getAttribute(PASSPORT_NAME), is(passport));
         assertThat(passportThreadLocal.getLogs(), is(Arrays.asList("set", "clear")));
     }
+
+    @Test
+    public void 当Header有值但已经登出() throws Exception {
+        Passport passport = new TestPassport(1, Arrays.asList("admin"));
+        passportLoginStatusRepository.setLogout(true);
+        String cookieValue = passportProvider.to(passportFactory.toString(passport));
+        request.setHeader(AUTHORIZATION_NAME, cookieValue);
+        jwtFilter.doFilter(request, new MockServletResponse(), new MockFilterChain());
+        assertThat(request.getAttribute(PASSPORT_NAME), nullValue());
+    }
+
 
     @Test
     public void 当Header有值但不合法() throws Exception {

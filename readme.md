@@ -2,9 +2,7 @@
   This project is used to obtain user passport from http cookie or header, and put in request's attribute. the user information is encoded by jwt or other.
 
 # Guide
-- Step1
-  
-    Implement PassportFactory
+- Implement PassportFactory
     
     Sample: use json to store passport
   ```
@@ -21,7 +19,12 @@
     }
    }
   ```
-- Step2 Config filter
+  
+- Implement PassportThreadLocal
+  
+  To store passport to a ThreadLocal and ensure to clear ThreadLocal when http call is over.  
+
+- Config filter
 
     ```
     @Bean
